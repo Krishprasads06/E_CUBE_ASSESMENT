@@ -1,0 +1,190 @@
+
+import sqlite3
+
+conn = sqlite3.connect('Assesment_E_CUBE_SQL.db')
+
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS Sales_Table (
+                   Sales_ID INTEGER PRIMARY KEY,
+                   CUSTOMER_ID TEXT NOT NULL
+                      )''')
+
+conn.execute("INSERT INTO Sales_Table (Sales_ID , CUSTOMER_ID) \
+              VALUES (11,'C1001' )");
+
+conn.execute("INSERT INTO Sales_Table (Sales_ID , CUSTOMER_ID) \
+              VALUES (12,'C2002')");
+
+
+cursor.execute("SELECT * FROM Sales_Table")
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS Customer_Table (
+                   CUSTOMER_ID TEXT PRIMARY KEY,
+                   Age TEXT NOT NULL
+                   )''')
+
+
+
+conn.execute("INSERT INTO Customer_Table (Customer_ID , Age) \
+              VALUES ('C1001', 17)");
+
+conn.execute("INSERT INTO Customer_Table (Customer_ID , Age) \
+              VALUES ('C2002', 19)");
+
+conn.execute("INSERT INTO Customer_Table (Customer_ID , Age) \
+              VALUES ('C3001' , 20)");
+
+cursor.execute("SELECT * FROM Customer_Table")
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS Orders_Table (
+                   Order_ID TEXT PRIMARY KEY,
+                   Sales_ID Integer NOT NULL,
+                   Item_Id TEXT NOT NULL,
+                   Quantity Integer
+                   )''')
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord01', 10 , 'it01' , 2)");
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord02', 10 , 'it02' , 3)");
+
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord03', 10 , 'it03' , Null)");
+
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord04', 11 , 'it01' , 1)");
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord05', 11 , 'it02' , Null)");
+
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord06', 11 , 'it03' , Null)");
+
+
+cursor.execute("SELECT * FROM Orders_Table")
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+
+query = """
+    CREATE TABLE customer_sales_data_new AS
+    SELECT Sales_table.Sales_Id , Sales_table.Customer_Id , Customer_Table.Age
+    FROM Sales_table
+    INNER JOIN Customer_Table ON Sales_table.customer_id = Customer_Table.customer_id
+"""
+
+cursor.execute(query)
+
+cursor.execute("SELECT * FROM customer_sales_data_new")
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord07', 12 , 'it01' , 1)");
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord08', 12 , 'it02' , 2)");
+
+
+
+conn.execute("INSERT INTO Orders_Table (Order_ID , Sales_ID , Item_ID , Quantity) \
+              VALUES ('Ord09', 12 , 'it03' , Null)");
+
+query = """
+    CREATE TABLE Qty_per_customer_table AS
+    SELECT customer_sales_data_new.Customer_Id , customer_sales_data_new.Age,Orders_Table.Item_Id, sum(Orders_Table.Quantity) as Sum_of_Qty
+    FROM customer_sales_data_new
+    INNER JOIN Orders_Table ON customer_sales_data_new.Sales_id = Orders_Table.Sales_id
+WHERE
+ customer_sales_data_new.Age between 18 and 35
+group by  customer_sales_data_new.Customer_Id , customer_sales_data_new.Age,Orders_Table.Item_Id
+"""
+
+cursor.execute(query)
+
+cursor.execute("SELECT * From Qty_per_customer_table")
+
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+query = """
+    CREATE TABLE Final_Output_Sales AS
+    SELECT *
+    FROM Qty_per_customer_table where Sum_of_Qty IS NOT NULL
+"""
+
+cursor.execute(query)
+
+cursor.execute("SELECT * From Final_Output_Sales")
+
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+    
+    
+conn.commit()
+
+import csv
+
+cursor.execute("SELECT * From Final_Output_Sales")
+
+
+rows = cursor.fetchall()
+
+
+# Specify the CSV file path
+csv_file_path = 'D:\KP docs\Output_sales_data.csv'
+
+# Write data to CSV file with semicolon delimiter
+with open(csv_file_path, 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter=';')
+    # Write header
+    csvwriter.writerow([i[0] for i in cursor.description])
+    # Write rows
+    csvwriter.writerows(rows)
+    
+print(f"CSV file with semicolon delimiter saved as {csv_file_path}")
+
+
+
+
+
+
+
